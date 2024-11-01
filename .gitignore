@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /MazeGeneratorV2/libs
 /Tensorflow/Tensorflow.pyproj
 /MazeGenrator.sln
+/MazeGeneratorV2/MazeGeneratorV2.vcxproj
+/MazeGeneratorV2/MazeGeneratorV2.vcxproj.filters
