@@ -25,6 +25,8 @@ void MarkovChain::generateMarkovChain()
 			updateRoomInChain(Room(x, y, maze));
 		}
 	}
+
+	mat->makeCompressed();
 }
 
 void MarkovChain::updateRoomInChain(const Room& room)
@@ -43,25 +45,50 @@ void MarkovChain::updateRoomInChain(const Room& room)
 	}
 
 	if (neighbors.empty()) {
+		(*this)(room, room, room) = 1.0f;
 		return;
 	}
 
 	if (neighbors.size() == 1) {
+#ifdef __RETURN_ENABLED__
+		(*this)(neighbors[0], room, neighbors[0]) = 1.0f - remain_prob;
+		(*this)(room, room, neighbors[0]) = 1.0f - remain_prob;
+		(*this)(neighbors[0], room, room) = remain_prob;
+		(*this)(room, room, room) = remain_prob;
+#else
 		(*this)(neighbors[0], room, neighbors[0]) = 1.0f;
+#endif
 		return;
 	}
 
+#ifdef __RETURN_ENABLED__
+	neighbors.push_back(room);
+#endif
 
 	for (const Room from : neighbors) {
 		for (const Room to : neighbors) {
+#ifdef __RETURN_ENABLED__
+			if (to == room) {
+				(*this)(from, room, to) = remain_prob;
+				continue;
+			}
+
+			if (from == room) {
+				(*this)(from, room, to) = (1.0f - remain_prob) / static_cast<float>(neighbors.size() - 1);
+				continue;
+			}
+#endif
+
 			if (from == to)
 				(*this)(from, room, to) = return_prob;
 			else
+#ifdef __RETURN_ENABLED__
+				(*this)(from, room, to) = (1.0f - return_prob - remain_prob) / static_cast<float>(neighbors.size() - 2);
+#else
 				(*this)(from, room, to) = (1.0f - return_prob) / static_cast<float>(neighbors.size() - 1);
+#endif
 		}
 	}
-
-	mat->makeCompressed();
 }
 
 void MarkovChain::createTranslationTable()
@@ -86,25 +113,23 @@ Vector MarkovChain::getStationairyDistribution()
 	I.setIdentity();
 	I.makeCompressed();
 
-	std::cout << I << std::endl;
-
 	Vector Z(mat->rows());
 	Z.setZero();
-
-	std::cout << Z << std::endl;
 
 	Vector pi(mat->rows());
 
 	Matrix eq = (*mat) - I;
 	eq.makeCompressed();
-
-	std::cout << eq << std::endl;
+	std::cout << *mat;
+	std::cout << eq;
+	std::cout << "is row major? " << eq.IsRowMajor << std::endl;
 
 	Eigen::SparseQR<Matrix, Eigen::COLAMDOrdering<int>> solver;
 	solver.compute(eq);
 	if (solver.info() != Eigen::Success) {
 		std::cout << "failure " << solver.info() << std::endl;
 	}
+
 	pi = solver.solve(Z);
 	if (solver.info() != Eigen::Success) {
 		std::cout << "failure2" << std::endl;
@@ -113,9 +138,28 @@ Vector MarkovChain::getStationairyDistribution()
 	return pi;
 }
 
-void MarkovChain::PrintDistribution(const Vector& dist) {
-	std::cout << dist << std::endl;
+Matrix MarkovChain::nStepMat(int n)
+{
+	if (n <= 0)
+		throw std::invalid_argument("n must be bigger than 0");
 
+	if (n == 1)
+		return *mat;
+
+	Matrix res = (*mat) * (*mat);
+
+	if (n == 2)
+		return res;
+
+	for (int i = 2; i < n; ++i) {
+		res = res * (*mat);
+	}
+
+	return res;
+}
+
+
+void MarkovChain::PrintDistribution(const Vector& dist) {
 	for (int i = 0; i < dist.rows(); ++i) {
 		int index = translateFromValidIndex(i);
 		auto ind = convertFromIndex(index);
@@ -130,10 +174,10 @@ void MarkovChain::validateMarkovChain()
 	std::cout << "++++++++++++++++++++ Validating Markov Chain ++++++++++++++++++++++++++" << std::endl << std::endl;
 	std::cout << maze << std::endl;
 
-	std::cout << "============== Room Tests ==============" << std::endl << std::endl;
+	/*std::cout << "============== Room Tests ==============" << std::endl << std::endl;
 	validateRoom(0, 0);
 	validateRoom(4, 4);
-	validateRoom(4, 3);
+	validateRoom(4, 3);*/
 
 	std::cout << "============== Row Tests ===============" << std::endl << std::endl;
 
@@ -147,13 +191,13 @@ void MarkovChain::validateMarkovChain()
 	int failures = 0;
 	for (int i = 0; i < res.rows(); ++i) {
 		float x = res(i);
+		auto cords = convertFromIndex(translateFromValidIndex(i));
 		if (abs(x - 1.0f) > 0.005) {
-			auto cords = convertFromIndex(i);
-			std::cout << "Test failed for row " << i << " { From: {" << cords.first.x << "," << cords.first.y << "}, at: {" << cords.second.x << "," << cords.second.y << "}}" << " does not add to 1, adds to: " << x << std::endl;
+			std::cout << "Test failed for row " << i << " { From: {" << cords.first.x << "," << cords.first.y << "}, at: {" << cords.second.x << "," << cords.second.y << "}}" << " adds to: " << x << std::endl;
 			++failures;
 			continue;
 		}
-		//std::cout << "Row " << i << " passed" << std::endl;
+		//std::cout << "Test succeeded for row " << i << " { From: {" << cords.first.x << "," << cords.first.y << "}, at: {" << cords.second.x << "," << cords.second.y << "}}" << " adds to: " << x << std::endl;
 	}
 	std::cout << "Test ended, " << failures << " rows failed" << std::endl << std::endl;
 

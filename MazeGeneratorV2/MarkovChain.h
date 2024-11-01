@@ -20,6 +20,7 @@ private:
 	int nr_valid_index;
 
 	const float return_prob = 0.1f;
+	const float remain_prob = 0.05f;
 
 	void createTranslationTable();
 	int convertToIndex(const Room& prev, const Room& cord) const;
@@ -47,6 +48,8 @@ public:
 	int translateIndex(int index) const;
 	int translateFromValidIndex(int valid_index) const;
 	int translateIndex(const Room& prev, const Room& cord) const;
+
+	Matrix nStepMat(int n);
 
 	float& operator()(const Room& prev, const Room& cord, const Room& next);
 	float operator()(const Room& prev, const Room& cord, const Room& next) const;
@@ -78,6 +81,11 @@ inline std::pair<Room, Room> MarkovChain::convertFromIndex(int index) const
 
 inline bool MarkovChain::isValidStepHelper(const Room& prev, const Room& cord) const
 {
+#ifdef __RETURN_ENABLED__
+	if (prev == cord)
+		return true;
+#endif
+	
 	if (!prev.isNeighbor(cord))
 		return false;
 

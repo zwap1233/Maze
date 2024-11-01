@@ -5,11 +5,13 @@
 
 int main()
 {
-    Maze maze(15, 10);
+    Maze maze(2, 2);
 
     MarkovChain chain(maze);
 
     chain.validateMarkovChain();
     auto pi = chain.getStationairyDistribution();
     chain.PrintDistribution(pi);
+
+    //std::cout << (chain.nStepMat(20)-chain.nStepMat(19)) << std::endl;
 }
