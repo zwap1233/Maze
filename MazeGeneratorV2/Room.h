@@ -25,7 +25,12 @@ public:
 
 	bool& operator()(const Direction dir);
 	const bool& operator()(const Direction dir) const;
+
+	Room& operator=(const Room& other);
+
 	bool operator==(const Room& other) const;
+	bool operator<(const Room& other) const;
+	bool operator>(const Room& other) const;
 
 	int getState() const;
 };
@@ -66,7 +71,17 @@ inline bool Room::isNeighbor(const Room& room) const
 
 inline bool Room::operator==(const Room& other) const
 {
-	return (other.x == x && other.y == y);
+	return this->getState() == other.getState();
+}
+
+inline bool Room::operator<(const Room& other) const
+{
+	return this->getState() < other.getState();
+}
+
+inline bool Room::operator>(const Room& other) const
+{
+	return this->getState() > other.getState();
 }
 
 inline int Room::getDoorIndex(int x, int y) const
@@ -124,6 +139,16 @@ inline const bool& Room::operator()(const Direction dir) const
 		throw std::domain_error("Invalid Direction");
 		break;
 	}
+}
+
+inline Room& Room::operator=(const Room& other)
+{
+	x = other.x;
+	y = other.y;
+
+	maze = other.maze;
+
+	return *this;
 }
 
 inline int Room::getState() const

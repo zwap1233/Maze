@@ -24,7 +24,6 @@ private:
 
 	void createTranslationTable();
 	int convertToIndex(const Room& prev, const Room& cord) const;
-	std::pair<Room, Room> convertFromIndex(int index) const;
 
 	bool isValidStepHelper(const Room& prev, const Room& cord) const;
 
@@ -38,9 +37,14 @@ public:
 	MarkovChain(Maze& maze);
 	~MarkovChain();
 
+	int getMaxValidIndex();
+	int getMaxIndex();
+	int getNrStates();
+
 	void validateMarkovChain();
 
-	Vector getStationairyDistribution();
+	Vector getOccupancyDistribution(int max_steps = 10000);
+	Matrix getNStepMatrix(int n);
 	void PrintDistribution(const Vector& dist);
 
 	bool isValidStep(const Room& prev, const Room& cord) const;
@@ -49,12 +53,29 @@ public:
 	int translateFromValidIndex(int valid_index) const;
 	int translateIndex(const Room& prev, const Room& cord) const;
 
-	Matrix nStepMat(int n);
+	std::pair<Room, Room> convertFromIndex(int index) const;
 
 	float& operator()(const Room& prev, const Room& cord, const Room& next);
 	float operator()(const Room& prev, const Room& cord, const Room& next) const;
 
 };
+
+Vector getRoomProbabilityDistribution(MarkovChain& chain, Vector& dist);
+
+inline int MarkovChain::getMaxValidIndex()
+{
+	return nr_valid_index;
+}
+
+inline int MarkovChain::getMaxIndex()
+{
+	return nr_index;
+}
+
+inline int MarkovChain::getNrStates()
+{
+	return nr_states;
+}
 
 inline int MarkovChain::convertToIndex(const Room& prev, const Room& cord) const
 {
@@ -118,15 +139,6 @@ inline bool MarkovChain::isValidStep(const Room& prev, const Room& cord) const
 	return (translateIndex(prev, cord) >= 0);
 }
 
-
-inline int MarkovChain::translateIndex(int index) const
-{
-	if (index < 0 || index >= nr_index)
-		throw std::domain_error("Out of bounds");
-
-	return translation_table[index];
-}
-
 inline int MarkovChain::translateFromValidIndex(int valid_index) const
 {
 	if (valid_index < 0 || valid_index >= nr_valid_index)
@@ -138,6 +150,14 @@ inline int MarkovChain::translateFromValidIndex(int valid_index) const
 	}
 
 	return -1;
+}
+
+inline int MarkovChain::translateIndex(int index) const
+{
+	if (index < 0 || index >= nr_index)
+		throw std::domain_error("Out of bounds");
+
+	return translation_table[index];
 }
 
 inline int MarkovChain::translateIndex(const Room& prev, const Room& cord) const

@@ -107,57 +107,53 @@ void MarkovChain::createTranslationTable()
 	}
 }
 
-Vector MarkovChain::getStationairyDistribution()
+Vector MarkovChain::getOccupancyDistribution(int max_steps)
 {
-	Matrix I(mat->rows(), mat->cols());
-	I.setIdentity();
-	I.makeCompressed();
-
-	Vector Z(mat->rows());
-	Z.setZero();
-
-	Vector pi(mat->rows());
-
-	Matrix eq = (*mat) - I;
-	eq.makeCompressed();
-	std::cout << *mat;
-	std::cout << eq;
-	std::cout << "is row major? " << eq.IsRowMajor << std::endl;
-
-	Eigen::SparseQR<Matrix, Eigen::COLAMDOrdering<int>> solver;
-	solver.compute(eq);
-	if (solver.info() != Eigen::Success) {
-		std::cout << "failure " << solver.info() << std::endl;
+	//Eigen::IOFormat format(7, 0, ", ", "\n", "[", "]", "", "\n");
+	Vector dist_even(mat->rows());
+	dist_even.setZero();
+	
+	for (int i = 0; i < dist_even.size(); ++i) {
+		dist_even(i) = (1.0f / static_cast<float>(dist_even.size()));
 	}
 
-	pi = solver.solve(Z);
-	if (solver.info() != Eigen::Success) {
-		std::cout << "failure2" << std::endl;
+	Vector dist_ref = dist_even;
+	Vector dist_odd = dist_even;
+	Vector diff(mat->rows());
+	diff.setZero();
+
+	for (int i = 0; i < max_steps; ++i) {
+		dist_ref = dist_even;
+		dist_odd = (*mat) * dist_even;
+		dist_even = (*mat) * dist_odd;
+		
+		diff = dist_ref - dist_even;
+
+		if (diff.maxCoeff() < 0.00001) {
+			return ((dist_even + dist_odd) / 2);
+		}
 	}
 
-	return pi;
+	dist_even.setZero();
+	return dist_even;
 }
 
-Matrix MarkovChain::nStepMat(int n)
+Matrix MarkovChain::getNStepMatrix(int n)
 {
-	if (n <= 0)
-		throw std::invalid_argument("n must be bigger than 0");
+	Matrix P = (*mat);
+
+	if (n < 0)
+		throw std::invalid_argument("invalid n");
 
 	if (n == 1)
-		return *mat;
+		return (*mat);
 
-	Matrix res = (*mat) * (*mat);
-
-	if (n == 2)
-		return res;
-
-	for (int i = 2; i < n; ++i) {
-		res = res * (*mat);
+	for (int i = 1; i < n; ++i) {
+		P = P * (*mat);
 	}
 
-	return res;
+	return P;
 }
-
 
 void MarkovChain::PrintDistribution(const Vector& dist) {
 	for (int i = 0; i < dist.rows(); ++i) {
@@ -165,6 +161,27 @@ void MarkovChain::PrintDistribution(const Vector& dist) {
 		auto ind = convertFromIndex(index);
 		std::cout << "Valid Index: " << i << " Index: " << index << " Value: " << dist(i) << " {{" << ind.first.x << "," << ind.first.y << "},{" << ind.second.x << "," << ind.second.y << "}} " << std::endl;
 	}
+}
+
+Vector getRoomProbabilityDistribution(MarkovChain& chain, Vector& dist)
+{
+	std::map<Room, float> room_map;
+
+	for (int i = 0; i < dist.size(); ++i) {
+		auto cords = chain.convertFromIndex(chain.translateFromValidIndex(i));
+		room_map[cords.second] += dist(i);
+	}
+
+	Vector res(room_map.size());
+
+	for (auto it = room_map.begin(); it != room_map.end(); ++it) {
+		Room room = it->first;
+		float value = it->second;
+		
+		res(room.getState()) = value;
+	}
+
+	return res;
 }
 
 // ================== Validation Functions ======================

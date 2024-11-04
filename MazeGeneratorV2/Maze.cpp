@@ -15,6 +15,7 @@ Maze::~Maze()
 
 void Maze::generate()
 {
+	std::srand(std::time(nullptr));
 	generator_visits = (bool*) calloc(size_x * size_y, sizeof(bool));
 	(*this)(0, 0).generatorVisit();
 
