@@ -1,4 +1,5 @@
 #include "MarkovChain.h"
+#include "Draw.h"
 
 MarkovChain::MarkovChain(Maze& maze) : maze(maze)
 {
@@ -110,12 +111,8 @@ void MarkovChain::createTranslationTable()
 Vector MarkovChain::getOccupancyDistribution(int max_steps)
 {
 	//Eigen::IOFormat format(7, 0, ", ", "\n", "[", "]", "", "\n");
-	Vector dist_even(mat->rows());
-	dist_even.setZero();
-	
-	for (int i = 0; i < dist_even.size(); ++i) {
-		dist_even(i) = (1.0f / static_cast<float>(dist_even.size()));
-	}
+
+	Vector dist_even = setupDistribution(*this, maze, Room(5, 5, maze));
 
 	Vector dist_ref = dist_even;
 	Vector dist_odd = dist_even;
@@ -130,6 +127,12 @@ Vector MarkovChain::getOccupancyDistribution(int max_steps)
 		diff = dist_ref - dist_even;
 
 		if (diff.maxCoeff() < 0.00001) {
+			cv::Mat image_even = drawMaze(maze, *this, dist_even);
+			cv::Mat image_odd = drawMaze(maze, *this, dist_odd);
+
+			displayImage(image_even, "even");
+			displayImage(image_odd, "odd");
+
 			return ((dist_even + dist_odd) / 2);
 		}
 	}
@@ -182,6 +185,38 @@ Vector getRoomProbabilityDistribution(MarkovChain& chain, Vector& dist)
 	}
 
 	return res;
+}
+
+Vector setupDistribution(MarkovChain& chain, Maze& maze, Room room) {
+	Vector dist(chain.getMaxValidIndex());
+	std::vector<Room> neighbors;
+
+	if (room(Direction::LEFT)) {
+		neighbors.push_back(room.getNeighbor(Direction::LEFT));
+		std::cout << "LEFT,";
+	}
+
+	if (room(Direction::UP)) {
+		neighbors.push_back(room.getNeighbor(Direction::UP));
+		std::cout << "UP,";
+	}
+
+	if (room(Direction::RIGHT)) {
+		neighbors.push_back(room.getNeighbor(Direction::RIGHT));
+		std::cout << "RIGHT,";
+	}
+
+	if (room(Direction::DOWN)) {
+		neighbors.push_back(room.getNeighbor(Direction::DOWN));
+		std::cout << "DOWN,";
+	}
+
+	for (Room from : neighbors) {
+		dist(chain.translateIndex(from, room)) = (1.0f / neighbors.size());
+		std::cout << "{" << from.x << "," << from.y << "}" << std::endl;
+	}
+
+	return dist;
 }
 
 // ================== Validation Functions ======================
