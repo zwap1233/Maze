@@ -61,6 +61,7 @@ public:
 };
 
 Vector getRoomProbabilityDistribution(MarkovChain& chain, Vector& dist);
+Vector setupDistribution(MarkovChain& chain, Maze& maze, Room room);
 
 inline int MarkovChain::getMaxValidIndex()
 {
