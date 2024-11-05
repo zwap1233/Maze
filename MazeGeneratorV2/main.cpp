@@ -2,6 +2,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/core/utils/logger.hpp>
 #include <iostream>
 #include <vector>
 #include "Draw.h"
@@ -12,6 +13,9 @@ using namespace cv;
 
 int main()
 {
+
+    cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
+
     Maze maze(10, 10);
 
     MarkovChain chain(maze);

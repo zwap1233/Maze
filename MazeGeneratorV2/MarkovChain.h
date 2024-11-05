@@ -6,8 +6,8 @@
 #include "Maze.h"
 #include "Room.h"
 
-typedef Eigen::SparseMatrix<float> Matrix;
-typedef Eigen::Matrix<float, Eigen::Dynamic, 1> Vector;
+typedef Eigen::SparseMatrix<double> Matrix;
+typedef Eigen::Matrix<double, Eigen::Dynamic, 1> Vector;
 
 class MarkovChain
 {
@@ -19,8 +19,8 @@ private:
 	int nr_index;
 	int nr_valid_index;
 
-	const float return_prob = 0.1f;
-	const float remain_prob = 0.05f;
+	const double return_prob = 0.1f;
+	const double remain_prob = 0.05f;
 
 	void createTranslationTable();
 	int convertToIndex(const Room& prev, const Room& cord) const;
@@ -43,7 +43,7 @@ public:
 
 	void validateMarkovChain();
 
-	Vector getOccupancyDistribution(int max_steps = 10000);
+	Vector getOccupancyDistribution(int min_steps = 0, int max_steps = 10000);
 	Matrix getNStepMatrix(int n);
 	void PrintDistribution(const Vector& dist);
 
@@ -55,8 +55,8 @@ public:
 
 	std::pair<Room, Room> convertFromIndex(int index) const;
 
-	float& operator()(const Room& prev, const Room& cord, const Room& next);
-	float operator()(const Room& prev, const Room& cord, const Room& next) const;
+	double& operator()(const Room& prev, const Room& cord, const Room& next);
+	double operator()(const Room& prev, const Room& cord, const Room& next) const;
 
 };
 
@@ -166,7 +166,7 @@ inline int MarkovChain::translateIndex(const Room& prev, const Room& cord) const
 	return translation_table[convertToIndex(prev, cord)];
 }
 
-inline float& MarkovChain::operator()(const Room& prev, const Room& cord, const Room& next)
+inline double& MarkovChain::operator()(const Room& prev, const Room& cord, const Room& next)
 {
 	if (!isValidStep(prev, cord) || !isValidStep(cord, next))
 		throw std::domain_error("Invalid Step");
@@ -174,7 +174,7 @@ inline float& MarkovChain::operator()(const Room& prev, const Room& cord, const 
 	return mat->coeffRef(translateIndex(prev, cord), translateIndex(cord, next));
 }
 
-inline float MarkovChain::operator()(const Room& prev, const Room& cord, const Room& next) const
+inline double MarkovChain::operator()(const Room& prev, const Room& cord, const Room& next) const
 {
 	if (!isValidStep(prev, cord) || !isValidStep(cord, next))
 		throw std::domain_error("Invalid Step");

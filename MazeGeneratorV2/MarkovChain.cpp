@@ -75,7 +75,7 @@ void MarkovChain::updateRoomInChain(const Room& room)
 			}
 
 			if (from == room) {
-				(*this)(from, room, to) = (1.0f - remain_prob) / static_cast<float>(neighbors.size() - 1);
+				(*this)(from, room, to) = (1.0f - remain_prob) / static_cast<double>(neighbors.size() - 1);
 				continue;
 			}
 #endif
@@ -84,9 +84,9 @@ void MarkovChain::updateRoomInChain(const Room& room)
 				(*this)(from, room, to) = return_prob;
 			else
 #ifdef __RETURN_ENABLED__
-				(*this)(from, room, to) = (1.0f - return_prob - remain_prob) / static_cast<float>(neighbors.size() - 2);
+				(*this)(from, room, to) = (1.0f - return_prob - remain_prob) / static_cast<double>(neighbors.size() - 2);
 #else
-				(*this)(from, room, to) = (1.0f - return_prob) / static_cast<float>(neighbors.size() - 1);
+				(*this)(from, room, to) = (1.0f - return_prob) / static_cast<double>(neighbors.size() - 1);
 #endif
 		}
 	}
@@ -108,7 +108,33 @@ void MarkovChain::createTranslationTable()
 	}
 }
 
-Vector MarkovChain::getOccupancyDistribution(int max_steps)
+//Vector MarkovChain::getOccupancyDistribution(int max_steps)
+//{
+//	Eigen::IOFormat format(7, 0, ", ", "\n", "[", "]", "", "\n");
+//
+//	Vector dist = setupDistribution(*this, maze, Room(5, 5, maze));
+//	std::cout << dist.format(format) << std::endl;
+//
+//
+//	Vector dist_odd = dist;
+//	Vector diff(mat->rows());
+//	diff.setZero();
+//
+//	for (int i = 0; i < max_steps; ++i) {
+//		dist = (*mat) * dist;
+//	}
+//	
+//	dist_odd = (*mat) * dist;
+//	std::cout << dist.format(format) << std::endl;
+//	std::cout << dist_odd.format(format) << std::endl;
+//	std::cout << (dist - dist_odd).format(format) << std::endl;
+//	std::cout << ((dist_odd + dist) / 2).format(format) << std::endl;
+//
+//
+//	return dist;
+//}
+
+Vector MarkovChain::getOccupancyDistribution(int min_steps, int max_steps)
 {
 	//Eigen::IOFormat format(7, 0, ", ", "\n", "[", "]", "", "\n");
 
@@ -119,6 +145,10 @@ Vector MarkovChain::getOccupancyDistribution(int max_steps)
 	Vector diff(mat->rows());
 	diff.setZero();
 
+	for (int i = 0; i < min_steps; ++i) {
+		dist_even = (*mat) * dist_even;
+	}
+
 	for (int i = 0; i < max_steps; ++i) {
 		dist_ref = dist_even;
 		dist_odd = (*mat) * dist_even;
@@ -126,12 +156,12 @@ Vector MarkovChain::getOccupancyDistribution(int max_steps)
 		
 		diff = dist_ref - dist_even;
 
-		if (diff.maxCoeff() < 0.00001) {
-			cv::Mat image_even = drawMaze(maze, *this, dist_even);
-			cv::Mat image_odd = drawMaze(maze, *this, dist_odd);
-
-			displayImage(image_even, "even");
-			displayImage(image_odd, "odd");
+		if (diff.maxCoeff() < 0.0000001) {
+			/*std::cout << dist_even.format(format) << std::endl;
+			std::cout << dist_ref.format(format) << std::endl;
+			std::cout << dist_odd.format(format) << std::endl;
+			std::cout << (dist_odd - dist_even).format(format) << std::endl;
+			std::cout << ((dist_even + dist_odd) / 2).format(format) << std::endl;*/
 
 			return ((dist_even + dist_odd) / 2);
 		}
@@ -140,6 +170,8 @@ Vector MarkovChain::getOccupancyDistribution(int max_steps)
 	dist_even.setZero();
 	return dist_even;
 }
+
+
 
 Matrix MarkovChain::getNStepMatrix(int n)
 {
@@ -168,7 +200,7 @@ void MarkovChain::PrintDistribution(const Vector& dist) {
 
 Vector getRoomProbabilityDistribution(MarkovChain& chain, Vector& dist)
 {
-	std::map<Room, float> room_map;
+	std::map<Room, double> room_map;
 
 	for (int i = 0; i < dist.size(); ++i) {
 		auto cords = chain.convertFromIndex(chain.translateFromValidIndex(i));
@@ -179,7 +211,7 @@ Vector getRoomProbabilityDistribution(MarkovChain& chain, Vector& dist)
 
 	for (auto it = room_map.begin(); it != room_map.end(); ++it) {
 		Room room = it->first;
-		float value = it->second;
+		double value = it->second;
 		
 		res(room.getState()) = value;
 	}
@@ -191,29 +223,26 @@ Vector setupDistribution(MarkovChain& chain, Maze& maze, Room room) {
 	Vector dist(chain.getMaxValidIndex());
 	std::vector<Room> neighbors;
 
+	dist.setZero();
+
 	if (room(Direction::LEFT)) {
 		neighbors.push_back(room.getNeighbor(Direction::LEFT));
-		std::cout << "LEFT,";
 	}
 
 	if (room(Direction::UP)) {
 		neighbors.push_back(room.getNeighbor(Direction::UP));
-		std::cout << "UP,";
 	}
 
 	if (room(Direction::RIGHT)) {
 		neighbors.push_back(room.getNeighbor(Direction::RIGHT));
-		std::cout << "RIGHT,";
 	}
 
 	if (room(Direction::DOWN)) {
 		neighbors.push_back(room.getNeighbor(Direction::DOWN));
-		std::cout << "DOWN,";
 	}
 
 	for (Room from : neighbors) {
 		dist(chain.translateIndex(from, room)) = (1.0f / neighbors.size());
-		std::cout << "{" << from.x << "," << from.y << "}" << std::endl;
 	}
 
 	return dist;
@@ -242,7 +271,7 @@ void MarkovChain::validateMarkovChain()
 
 	int failures = 0;
 	for (int i = 0; i < res.rows(); ++i) {
-		float x = res(i);
+		double x = res(i);
 		auto cords = convertFromIndex(translateFromValidIndex(i));
 		if (abs(x - 1.0f) > 0.005) {
 			std::cout << "Test failed for row " << i << " { From: {" << cords.first.x << "," << cords.first.y << "}, at: {" << cords.second.x << "," << cords.second.y << "}}" << " adds to: " << x << std::endl;

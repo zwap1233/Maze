@@ -22,7 +22,6 @@ inline void addLine(Mat& img, Point a, Point b) {
 	int thickness = 2;
 	int lineType = LINE_8;
 	
-
 	line(img, a + Point(offset,offset), b + Point(offset, offset), Scalar(255, 255, 255), thickness, lineType);
 }
 
@@ -33,13 +32,13 @@ inline void removeLine(Mat& img, Point a, Point b) {
 	line(img, a + Point(offset, offset), b + Point(offset, offset), Scalar(0, 0, 0), thickness, lineType);
 }
 
-const float max_float = 0.01;
+const double max_double = 0.01;
 
-inline void drawFloat(Mat& img, Point point, float num) {
+inline void drawdouble(Mat& img, Point point, double num) {
 	int thickness = 2;
 	int lineType = LINE_8;
 
-	double color_scale = ((192.0f * num) / max_float) + 64.0f;
+	double color_scale = ((192.0f * num) / max_double) + 64.0f;
 
 	Point polygon[4];
 	polygon[0] = Point(5, 5) + point + Point(offset, offset);
@@ -94,7 +93,7 @@ Mat drawMaze(Maze& maze, MarkovChain& chain, Vector& dist) {
 		}
 	}
 
-	std::map<Room, float> room_map;
+	std::map<Room, double> room_map;
 
 	for (int i = 0; i < dist.size(); ++i) {
 		auto cords = chain.convertFromIndex(chain.translateFromValidIndex(i));
@@ -103,9 +102,9 @@ Mat drawMaze(Maze& maze, MarkovChain& chain, Vector& dist) {
 
 	for (auto it = room_map.begin(); it != room_map.end(); ++it) {
 		Room room = it->first;
-		float value = it->second;
+		double value = it->second;
 
-		drawFloat(image, Point(room_x * room.x, room_y * (maze.getHeight() - 1 - room.y)), value);
+		drawdouble(image, Point(room_x * room.x, room_y * (maze.getHeight() - 1 - room.y)), value);
 	}
 
 	return image;
