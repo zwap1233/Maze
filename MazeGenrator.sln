@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35222.181
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MazeGeneratorV2", "MazeGeneratorV2\MazeGeneratorV2.vcxproj", "{060CD733-94BB-498D-B56D-7461E90C2907}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Tensorflow", "Tensorflow\Tensorflow.pyproj", "{A284AA2A-0573-40E3-813B-6FC4F6BCF5F5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Debug|Any CPU.Build.0 = Debug|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Debug|x64.ActiveCfg = Debug|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Debug|x64.Build.0 = Debug|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Debug|x86.ActiveCfg = Debug|Win32
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Debug|x86.Build.0 = Debug|Win32
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Release|Any CPU.ActiveCfg = Release|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Release|Any CPU.Build.0 = Release|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Release|x64.ActiveCfg = Release|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Release|x64.Build.0 = Release|x64
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Release|x86.ActiveCfg = Release|Win32
+		{060CD733-94BB-498D-B56D-7461E90C2907}.Release|x86.Build.0 = Release|Win32
+		{A284AA2A-0573-40E3-813B-6FC4F6BCF5F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A284AA2A-0573-40E3-813B-6FC4F6BCF5F5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A284AA2A-0573-40E3-813B-6FC4F6BCF5F5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A284AA2A-0573-40E3-813B-6FC4F6BCF5F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A284AA2A-0573-40E3-813B-6FC4F6BCF5F5}.Release|x64.ActiveCfg = Release|Any CPU
+		{A284AA2A-0573-40E3-813B-6FC4F6BCF5F5}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A29BE171-091C-410B-AC1F-18465D3EA0AF}
+	EndGlobalSection
+EndGlobal
