@@ -41,10 +41,6 @@ public:
 	int getMaxIndex();
 	int getNrStates();
 
-	void validateMarkovChain();
-
-	Vector getOccupancyDistribution(int min_steps = 0, int max_steps = 10000);
-	Matrix getNStepMatrix(int n);
 	void PrintDistribution(const Vector& dist);
 
 	bool isValidStep(const Room& prev, const Room& cord) const;
@@ -52,8 +48,13 @@ public:
 	int translateIndex(int index) const;
 	int translateFromValidIndex(int valid_index) const;
 	int translateIndex(const Room& prev, const Room& cord) const;
-
 	std::pair<Room, Room> convertFromIndex(int index) const;
+	
+	void validateMarkovChain();
+
+	Vector getOccupancyDistribution(int min_steps = 0, int max_steps = 10000);
+	Vector getNStepDistribution(const Vector& dist, int n);
+	Matrix getNStepMatrix(int n);
 
 	double& operator()(const Room& prev, const Room& cord, const Room& next);
 	double operator()(const Room& prev, const Room& cord, const Room& next) const;

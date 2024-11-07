@@ -22,6 +22,29 @@ void Maze::generate()
 	free(generator_visits);
 }
 
+std::ostream& operator<<(std::ostream& out, const Direction& dir)
+{
+	switch (dir)
+	{
+	case Direction::LEFT:
+		out << "LEFT";
+		break;
+	case Direction::UP:
+		out << "UP";
+		break;
+	case Direction::RIGHT:
+		out << "RIGHT";
+		break;
+	case Direction::DOWN:
+		out << "DOWN";
+		break;
+	default:
+		break;
+	}
+
+	return out;
+}
+
 std::ostream& operator<<(std::ostream& out, const Maze& maze)
 {
 	out << "Dimensions: " << maze.size_y << "x" << maze.size_x << std::endl;

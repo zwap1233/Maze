@@ -11,6 +11,16 @@
 
 using namespace cv;
 
+void makeRandomChange(Maze& maze) {
+    int x = rand() % (maze.getWidth() - 2) + 1;
+    int y = rand() % (maze.getHeight() - 2) + 1;
+    Direction dir = static_cast<Direction>(rand() % 4);
+
+    std::cout << "{" << x << "," << y << "} " << dir << std::endl;
+
+    maze(x, y)(dir) = true;
+}
+
 int main()
 {
 
@@ -18,34 +28,16 @@ int main()
 
     Maze maze(10, 10);
 
+    makeRandomChange(maze);
+    makeRandomChange(maze);
+    makeRandomChange(maze);
+
     MarkovChain chain(maze);
 
     chain.validateMarkovChain();
-    Vector dist = chain.getOccupancyDistribution();
+    Vector dist = chain.getNStepDistribution(setupDistribution(chain, maze, Room(3,3, maze)), 1000);
     Mat image = drawMaze(maze, chain, dist);
     displayImage(image, "Dist");
-    
-    //Matrix P = chain.getNStepMatrix(300);
-    ////Matrix P2 = chain.getNStepMatrix(301);
-
-    //Vector ones(P.rows());
-    //ones.setOnes();
-    //ones = P * (ones / P.rows());
-
-
-    //Room center(5, 5, maze);
-    //Vector center_dist = P * setupDistribution(chain, maze, center);
-
-    //Room origin(0, 0, maze);
-    //Vector origin_dist = P * setupDistribution(chain, maze, origin);
-
-    //Mat image_ones = drawMaze(maze, chain, ones);
-    //Mat image_center = drawMaze(maze, chain, center_dist);
-    //Mat image_origin = drawMaze(maze, chain, origin_dist);
-    //displayImage(image_ones, "Dist ones");
-    //displayImage(image_center, "Dist center");
-    //displayImage(image_origin, "Dist origin");
-    //saveImage(image);
 
     waitKey();
 }

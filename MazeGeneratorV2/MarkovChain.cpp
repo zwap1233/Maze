@@ -171,13 +171,31 @@ Vector MarkovChain::getOccupancyDistribution(int min_steps, int max_steps)
 	return dist_even;
 }
 
+Vector MarkovChain::getNStepDistribution(const Vector& dist, int n)
+{
+	if (n < 0)
+		throw std::invalid_argument("invalid n");
+
+	if (n == 0)
+		return dist;
+
+	Vector vec(mat->rows());
+	vec = (*mat) * dist;
+
+	for (int i = 1; i < n; ++i) {
+		vec = (*mat) * vec;
+	}
+
+	return ((vec + ((*mat) * vec)) / 2);
+}
+
 
 
 Matrix MarkovChain::getNStepMatrix(int n)
 {
 	Matrix P = (*mat);
 
-	if (n < 0)
+	if (n <= 0)
 		throw std::invalid_argument("invalid n");
 
 	if (n == 1)
