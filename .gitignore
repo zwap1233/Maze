@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /MazeGeneratorV2/libs
 /MazeGeneratorV2/imgs
+/LostAzure/.visualgdb/VisualGDBCache/LostAzure-Debug-VisualGDB
+/.visualgdb
