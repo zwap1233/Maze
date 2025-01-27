@@ -16,6 +16,7 @@ void Room::generatorVisit()
 {
 	maze.generator_visits[y * maze.size_x + x] = true;
 	bool deadend[4] = { false, false, false, false };
+	bool rolled[4] = { false, false, false, false };
 
 	while (!deadend[0] || !deadend[1] || !deadend[2] || !deadend[3]) {
 		int dir = rand() % 4;
@@ -27,6 +28,12 @@ void Room::generatorVisit()
 					(*this)(Direction::LEFT) = true;
 					maze(x - 1, y).generatorVisit();
 				}
+				else if (!rolled[0] && !((x-1) < 0 || (x-1) >= maze.size_x || (y) < 0 || (y) >= maze.size_y)) {
+					rolled[0] = true;
+					bool open = (rand() % 8) == 0;
+					if(open)
+						(*this)(Direction::LEFT) = true;
+				}
 			}
 			catch (std::domain_error e) { ; }
 			deadend[0] = true;
@@ -36,6 +43,12 @@ void Room::generatorVisit()
 				if (!(maze(x, y + 1).hasGeneratorVisited())) {
 					(*this)(Direction::UP) = true;
 					maze(x, y + 1).generatorVisit();
+				}
+				else if (!rolled[1] && !((x) < 0 || (x) >= maze.size_x || (y+1) < 0 || (y+1) >= maze.size_y)) {
+					rolled[1] = true;
+					bool open = (rand() % 8) == 0;
+					if (open)
+						(*this)(Direction::LEFT) = true;
 				}
 			}
 			catch (std::domain_error e) { ; }
@@ -47,6 +60,12 @@ void Room::generatorVisit()
 					(*this)(Direction::RIGHT) = true;
 					maze(x + 1, y).generatorVisit();
 				}
+				else if (!rolled[2] && !((x + 1) < 0 || (x + 1) >= maze.size_x || (y) < 0 || (y) >= maze.size_y)) {
+					rolled[2] = true;
+					bool open = (rand() % 8) == 0;
+					if (open)
+						(*this)(Direction::LEFT) = true;
+				}
 			}
 			catch (std::domain_error e) { ; }
 			deadend[2] = true;
@@ -56,6 +75,12 @@ void Room::generatorVisit()
 				if (!(maze(x, y - 1).hasGeneratorVisited())) {
 					(*this)(Direction::DOWN) = true;
 					maze(x, y - 1).generatorVisit();
+				}
+				else if (!rolled[3] && !((x) < 0 || (x) >= maze.size_x || (y-1) < 0 || (y-1) >= maze.size_y)) {
+					rolled[3] = true;
+					bool open = (rand() % 8) == 0;
+					if (open)
+						(*this)(Direction::LEFT) = true;
 				}
 			}
 			catch (std::domain_error e) { ; }
