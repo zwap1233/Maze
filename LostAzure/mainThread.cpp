@@ -2,7 +2,6 @@
 
 #include "InterruptHandler.h"
 #include "BoardManager.h"
-#include "Board.h"
 
 void mainThread(ULONG argument)
 {
@@ -12,7 +11,7 @@ void mainThread(ULONG argument)
 	
 	while (1)
 	{
-		updateTestPattern();
-		tx_thread_sleep(1);
+		updateBoards();
+		tx_thread_sleep(10);
 	}
 }

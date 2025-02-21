@@ -28,6 +28,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stm32h7xx_hal.h>
 
+#include <stm32h7xx_ll_dma.h>
+#include <stm32h7xx_ll_rcc.h>
+#include <stm32h7xx_ll_crs.h>
+#include <stm32h7xx_ll_bus.h>
+#include <stm32h7xx_ll_system.h>
+#include <stm32h7xx_ll_exti.h>
+#include <stm32h7xx_ll_cortex.h>
+#include <stm32h7xx_ll_utils.h>
+#include <stm32h7xx_ll_pwr.h>
+#include <stm32h7xx_ll_spi.h>
+#include <stm32h7xx_ll_gpio.h>
+
 #include <stdio.h>
 
 #include "app_azure_rtos_config.h"
@@ -102,7 +114,8 @@ void TickTest()
 }
 
 void SystemClock_Config(void);
-void static MX_SPI1_Init(void);
+static void MX_SPI1_Init(void);
+static void MX_DMA_Init(void);
 
 /**
   * @brief  Main program
@@ -111,6 +124,13 @@ void static MX_SPI1_Init(void);
   */
 int main(void)
 {
+	
+	/* Enable I-Cache---------------------------------------------------------*/
+	SCB_EnableICache();
+
+	/* Enable D-Cache---------------------------------------------------------*/
+	SCB_EnableDCache();
+	
 	/* STM32F4xx HAL library initialization:
 	     - Configure the Flash prefetch, instruction and Data caches
 	     - Configure the Systick to generate an interrupt each 1 msec
@@ -122,7 +142,8 @@ int main(void)
 	SystemClock_Config();
 	
 	MX_SPI1_Init();
-
+	MX_DMA_Init();
+	
 	/* Start scheduler */
 	tx_kernel_enter();
 
@@ -132,54 +153,61 @@ int main(void)
 
 void SystemClock_Config(void)
 {
-	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
-
-	/** Supply configuration update enable
-	*/
-	HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
-
-	/** Configure the main internal regulator output voltage
-	*/
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
-
-	while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
-
-	/** Initializes the RCC Oscillators according to the specified parameters
-	* in the RCC_OscInitTypeDef structure.
-	*/
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-	RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
-	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-	RCC_OscInitStruct.PLL.PLLM = 4;
-	RCC_OscInitStruct.PLL.PLLN = 30;
-	RCC_OscInitStruct.PLL.PLLP = 2;
-	RCC_OscInitStruct.PLL.PLLQ = 3;
-	RCC_OscInitStruct.PLL.PLLR = 2;
-	RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
-	RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
-	RCC_OscInitStruct.PLL.PLLFRACN = 0;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	LL_FLASH_SetLatency(LL_FLASH_LATENCY_4);
+	while (LL_FLASH_GetLatency() != LL_FLASH_LATENCY_4)
 	{
-		Error_Handler();
+	}
+	LL_PWR_ConfigSupply(LL_PWR_LDO_SUPPLY);
+	LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE0);
+	while (LL_PWR_IsActiveFlag_VOS() == 0)
+	{
+	}
+	LL_RCC_HSI_Enable();
+
+	/* Wait till HSI is ready */
+	while (LL_RCC_HSI_IsReady() != 1)
+	{
+
+	}
+	LL_RCC_HSI_SetCalibTrimming(64);
+	LL_RCC_HSI_SetDivider(LL_RCC_HSI_DIV1);
+	LL_RCC_PLL_SetSource(LL_RCC_PLLSOURCE_HSI);
+	LL_RCC_PLL1P_Enable();
+	LL_RCC_PLL1Q_Enable();
+	LL_RCC_PLL1_SetVCOInputRange(LL_RCC_PLLINPUTRANGE_8_16);
+	LL_RCC_PLL1_SetVCOOutputRange(LL_RCC_PLLVCORANGE_WIDE);
+	LL_RCC_PLL1_SetM(4);
+	LL_RCC_PLL1_SetN(30);
+	LL_RCC_PLL1_SetP(2);
+	LL_RCC_PLL1_SetQ(3);
+	LL_RCC_PLL1_SetR(2);
+	LL_RCC_PLL1_Enable();
+
+	/* Wait till PLL is ready */
+	while (LL_RCC_PLL1_IsReady() != 1)
+	{
 	}
 
-	/** Initializes the CPU, AHB and APB buses clocks
-	*/
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-	                            | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2
-	                            | RCC_CLOCKTYPE_D3PCLK1 | RCC_CLOCKTYPE_D1PCLK1;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
-	RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
-	RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
+	/* Intermediate AHB prescaler 2 when target frequency clock is higher than 80 MHz */
+	LL_RCC_SetAHBPrescaler(LL_RCC_AHB_DIV_2);
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+	LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL1);
+
+	/* Wait till System clock is ready */
+	while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL1)
+	{
+
+	}
+	LL_RCC_SetSysPrescaler(LL_RCC_SYSCLK_DIV_1);
+	LL_RCC_SetAHBPrescaler(LL_RCC_AHB_DIV_1);
+	LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
+	LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_2);
+	LL_RCC_SetAPB3Prescaler(LL_RCC_APB3_DIV_2);
+	LL_RCC_SetAPB4Prescaler(LL_RCC_APB4_DIV_2);
+	LL_SetSystemCoreClock(240000000);
+
+	/* Update the time base */
+	if (HAL_InitTick(TICK_INT_PRIORITY) != HAL_OK)
 	{
 		Error_Handler();
 	}
@@ -189,6 +217,7 @@ void SystemClock_Config(void)
  *						Peripheral Initalization									*
  ************************************************************************************/
 
+DMA_HandleTypeDef hdma_spi1_tx;
 SPI_HandleTypeDef hspi1;
 
 static void MX_SPI1_Init(void)
@@ -202,6 +231,7 @@ static void MX_SPI1_Init(void)
 		Error_Handler();
 	}
 	
+	__HAL_RCC_DMA1_CLK_ENABLE();
 	__HAL_RCC_SPI1_CLK_ENABLE();
 	
 	hspi1.Instance = SPI1;
@@ -211,7 +241,7 @@ static void MX_SPI1_Init(void)
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -230,6 +260,40 @@ static void MX_SPI1_Init(void)
 	{
 		Error_Handler();
 	}
+	
+	hdma_spi1_tx.Instance = DMA1_Stream0;
+	hdma_spi1_tx.Init.Request = DMA_REQUEST_SPI1_TX;
+	hdma_spi1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+	hdma_spi1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+	hdma_spi1_tx.Init.MemInc = DMA_MINC_ENABLE;
+	hdma_spi1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+	hdma_spi1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+	hdma_spi1_tx.Init.Mode = DMA_NORMAL;
+	hdma_spi1_tx.Init.Priority = DMA_PRIORITY_HIGH;
+	hdma_spi1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+	if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	__HAL_LINKDMA(&hspi1, hdmatx, hdma_spi1_tx);
+	
+	HAL_NVIC_SetPriority(SPI1_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(SPI1_IRQn);
+	
+}
+
+static void MX_DMA_Init(void)
+{
+
+	/* DMA controller clock enable */
+	__HAL_RCC_DMA1_CLK_ENABLE();
+
+	/* DMA interrupt init */
+	/* DMA1_Stream0_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+
 }
 
 /************************************************************************************

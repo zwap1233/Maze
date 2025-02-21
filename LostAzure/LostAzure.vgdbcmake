@@ -114,13 +114,21 @@
               <VirtualSourceFolder>
                 <Name>Maze Logic</Name>
                 <Subfolders />
-                <Files />
+                <Files>
+                  <string>Room.cpp</string>
+                  <string>Maze.cpp</string>
+                  <string>Section.cpp</string>
+                </Files>
                 <RelatedFilterName>Source Files</RelatedFilterName>
               </VirtualSourceFolder>
               <VirtualSourceFolder>
                 <Name>Maze Logic</Name>
                 <Subfolders />
-                <Files />
+                <Files>
+                  <string>Maze.h</string>
+                  <string>Room.h</string>
+                  <string>Section.h</string>
+                </Files>
                 <RelatedFilterName>Header Files</RelatedFilterName>
               </VirtualSourceFolder>
             </Subfolders>

@@ -23,15 +23,21 @@ add_bsp_based_executable(
 		stm32h7xx_hal_conf.h
 		syscalls.c
 		sysmem.c
-		Board.cpp
 		BoardManager.h
-		Board.h
 		BoardManager.cpp
 		InterruptHandler.cpp
 		InterruptHandler.h
 		mainThread.cpp
 		mainThread.h
 		SystemTimer.cpp
+		Room.cpp
+		Room.h
+		Maze.cpp
+		Maze.h
+		Section.cpp
+		Section.h
+		Renderer.cpp
+		Renderer.h
 	GENERATE_BIN
 	GENERATE_MAP
 	OUTPUT_RELOCATION_RECORDS)
