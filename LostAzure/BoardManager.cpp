@@ -45,6 +45,8 @@ void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
 	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
 	
 	LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_TX);
+	LL_SPI_SetTransferSize(SPI1, size);
+	
 	LL_SPI_Enable(SPI1);
 	LL_SPI_StartMasterTransfer(SPI1);
 	
@@ -53,6 +55,12 @@ void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
 		while (!LL_SPI_IsActiveFlag_TXP(SPI1)) { ; }
 		LL_SPI_TransmitData8(SPI1, data[i]);
 	}
+	
+	while (!LL_SPI_IsActiveFlag_EOT(SPI1)) { ; } //wait till SPI is done
+	
+	LL_SPI_ClearFlag_EOT(SPI1);
+	LL_SPI_ClearFlag_TXTF(SPI1);
+	
 	LL_SPI_Disable(SPI1);
 	
 	LL_GPIO_SetOutputPin(board.SS_PORT, board.SS_PIN);

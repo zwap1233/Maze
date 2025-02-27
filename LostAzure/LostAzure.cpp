@@ -141,7 +141,7 @@ int main(void)
 	
 	SystemClock_Config();
 	
-	MX_DMA_Init();
+	//MX_DMA_Init();
 	MX_SPI1_Init();
 	
 	/* Start scheduler */
