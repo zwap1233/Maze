@@ -3,33 +3,37 @@
 #include "InterruptHandler.h"
 #include "Renderer.h"
 
+#include <stm32h7xx_ll_dma.h>
+#include <stm32h7xx_ll_rcc.h>
+#include <stm32h7xx_ll_spi.h>
+#include <stm32h7xx_ll_gpio.h>
+#include <stm32h7xx_ll_bus.h>
+#include <stm32h7xx_ll_utils.h>
+
 #include <math.h>
 
 void configBoard(board_t &board);
 
-extern SPI_HandleTypeDef hspi1;
-extern DMA_HandleTypeDef hdma_spi1_tx;
-
 #define VSYNC_Port GPIOA
-#define VSYNC_Pin GPIO_PIN_3
+#define VSYNC_Pin LL_GPIO_PIN_3
 
 board_t board[9] = {
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_0 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_1 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_2 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_3 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_4 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_5 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_6 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_7 },
-	{ .SS_PORT = GPIOF, .SS_PIN = GPIO_PIN_8 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_0 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_1 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_2 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_3 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_4 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_5 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_6 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_7 },
+	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_8 },
 	};
 
 void inline pulseVSYNC()
 {
-	HAL_GPIO_WritePin(VSYNC_Port, VSYNC_Pin, GPIO_PIN_SET);
+	LL_GPIO_ResetOutputPin(VSYNC_Port, VSYNC_Pin);
 	HAL_Delay(1);
-	HAL_GPIO_WritePin(VSYNC_Port, VSYNC_Pin, GPIO_PIN_RESET);
+	LL_GPIO_SetOutputPin(VSYNC_Port, VSYNC_Pin);
 }
 
 void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
@@ -38,76 +42,85 @@ void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
 	data[1] = (uint8_t)(addr & 0b11) << 6;
 	data[1] = data[1] | (0b1 << 5);
 	
-	HAL_GPIO_WritePin(board.SS_PORT, board.SS_PIN, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi1, data, size, 100);
-	HAL_GPIO_WritePin(board.SS_PORT, board.SS_PIN, GPIO_PIN_SET);
+	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
+	
+	LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_TX);
+	LL_SPI_Enable(SPI1);
+	LL_SPI_StartMasterTransfer(SPI1);
+	
+	for (int i = 0; i < size; i++)
+	{
+		while (!LL_SPI_IsActiveFlag_TXP(SPI1)) { ; }
+		LL_SPI_TransmitData8(SPI1, data[i]);
+	}
+	LL_SPI_Disable(SPI1);
+	
+	LL_GPIO_SetOutputPin(board.SS_PORT, board.SS_PIN);
 }
 
 void receiveData(board_t &board, uint16_t addr, uint8_t *data, int size)
 {
 	data[0] = (uint8_t)(addr >> 2);
 	data[1] = (uint8_t)(addr & 0b11) << 6;
-	data[1] = data[1];
 	
-	HAL_GPIO_WritePin(board.SS_PORT, board.SS_PIN, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi1, data, 2, 100);
-	HAL_SPI_Receive(&hspi1, &(data[2]), size - 2, 100);
-	HAL_GPIO_WritePin(board.SS_PORT, board.SS_PIN, GPIO_PIN_SET);	
+	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
+	LL_SPI_TransmitData8(SPI1, data[0]);
+	LL_SPI_TransmitData8(SPI1, data[1]);
+	
+	for (int i = 2; i < size; i++)
+	{
+		data[i] = LL_SPI_ReceiveData8(SPI1);
+	}
+	LL_GPIO_SetOutputPin(board.SS_PORT, board.SS_PIN);
 }
 
-void transmitDMA(board_t &board, uint16_t addr, uint8_t *data, int size)
-{
-	data[0] = (uint8_t)(addr >> 2);
-	data[1] = (uint8_t)(addr & 0b11) << 6;
-	data[1] = data[1] | (0b1 << 5);
-	
-	HAL_GPIO_WritePin(board.SS_PORT, board.SS_PIN, GPIO_PIN_RESET);
-	HAL_SPI_Transmit_DMA(&hspi1, data, size);
-}
+//void transmitDMA(board_t &board, uint16_t addr, uint8_t *data, int size)
+//{
+//	data[0] = (uint8_t)(addr >> 2);
+//	data[1] = (uint8_t)(addr & 0b11) << 6;
+//	data[1] = data[1] | (0b1 << 5);
+//	
+//	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
+//	HAL_SPI_Transmit_DMA(&hspi1, data, size);
+//}
 
-
-GPIO_TypeDef* current_SS_PORT;
-uint16_t current_SS_PIN;
-void TransmissionCompletedCallback(SPI_HandleTypeDef* hspi)
+void TransmissionCompletedCallback()
 {
-	//set SS back up
-	HAL_GPIO_WritePin(current_SS_PORT, current_SS_PIN, GPIO_PIN_SET);
 }
 
 void initBoardManager()
 {
 	
-	//SPI Pins
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
-	GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	//SPI Pins configured by main()
+	/**SPI1 GPIO Configuration
+	PA5   ------> SPI1_SCK
+	PA6   ------> SPI1_MISO
+	PA7   ------> SPI1_MOSI
+	*/
+	
+	LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 	
 	//VSYNC
+	LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOA);
 	GPIO_InitStruct.Pin = VSYNC_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(VSYNC_Port, &GPIO_InitStruct);
+	GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+	LL_GPIO_Init(VSYNC_Port, &GPIO_InitStruct);
 	
 	//SS
-	__HAL_RCC_GPIOF_CLK_ENABLE();
-	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+	LL_AHB4_GRP1_EnableClock(LL_AHB4_GRP1_PERIPH_GPIOF);
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_0 | LL_GPIO_PIN_1 | LL_GPIO_PIN_2 | LL_GPIO_PIN_3 | LL_GPIO_PIN_4 | LL_GPIO_PIN_5 | LL_GPIO_PIN_6 | LL_GPIO_PIN_7 | LL_GPIO_PIN_8;
+	GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+	LL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 	
-	for (int i = 0; i < 9; i++)
-	{
-		HAL_GPIO_WritePin(board[i].SS_PORT, board[i].SS_PIN, GPIO_PIN_SET);
-	}
+	LL_GPIO_WriteOutputPort(GPIOF, 0xff);
 	
-	HAL_SPI_RegisterCallback(&hspi1, HAL_SPI_TX_COMPLETE_CB_ID, TransmissionCompletedCallback);
+	//LL_SPI_EnableIT_EOT(SPI1); //Enable EOT interrupt
 	
 	for (int i = 0; i < 9; i++)
 	{

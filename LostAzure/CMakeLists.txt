@@ -11,6 +11,7 @@ find_bsp(
 	HWREGISTER_LIST_FILE STM32H7xxxx/DeviceDefinitions/stm32h753xx.xml
 	DISABLE_GNU_EXTENSIONS)
 
+bsp_compile_definitions(USE_FULL_LL_DRIVER)
 add_bsp_based_executable(
 	NAME LostAzure
 	SOURCES
@@ -41,3 +42,4 @@ add_bsp_based_executable(
 	GENERATE_BIN
 	GENERATE_MAP
 	OUTPUT_RELOCATION_RECORDS)
+target_compile_definitions(LostAzure PRIVATE USE_FULL_LL_DRIVER)

@@ -1,9 +1,10 @@
 #include "InterruptHandler.h"
 
-#include "stm32h7xx_hal.h"
+#include <stm32h7xx_hal.h>
+#include <stm32h7xx_ll_spi.h>
 
-extern DMA_HandleTypeDef hdma_spi1_tx;
-extern SPI_HandleTypeDef hspi1;
+void TransmissionCompletedCallback();
+
 extern TIM_HandleTypeDef htim7;
 
 /*******************************************************************************/
@@ -80,12 +81,16 @@ void DebugMon_Handler(void)
 
 void DMA1_Stream0_IRQHandler(void)
 {
-	HAL_DMA_IRQHandler(&hdma_spi1_tx);
+	
 }
 
 void SPI1_IRQHandler(void)
 {
-	HAL_SPI_IRQHandler(&hspi1);
+	if (LL_SPI_IsActiveFlag_EOT(SPI1))
+	{
+		LL_SPI_ClearFlag_EOT(SPI1);
+		TransmissionCompletedCallback();
+	}
 }
 
 void TIM7_IRQHandler(void)

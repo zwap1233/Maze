@@ -9,6 +9,8 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Tensorflow", "Tensorflow\Te
 EndProject
 Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "LostAzure", "LostAzure\LostAzure.vgdbcmake", "{514527A1-F84A-4EDA-A593-BC930E133947}"
 EndProject
+Project("{803FD0C6-D64E-4E16-9DC3-1DAEC859A3D2}") = "TestProject", "TestProject\TestProject.vgdbcmake", "{3036BA39-993F-434F-9699-83A3954EFD2C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -109,6 +111,38 @@ Global
 		{514527A1-F84A-4EDA-A593-BC930E133947}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|VisualGDB
 		{514527A1-F84A-4EDA-A593-BC930E133947}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|VisualGDB
 		{514527A1-F84A-4EDA-A593-BC930E133947}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|Any CPU.ActiveCfg = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|Any CPU.Build.0 = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|VisualGDB.ActiveCfg = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|VisualGDB.Build.0 = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|x64.ActiveCfg = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|x64.Build.0 = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|x86.ActiveCfg = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Debug|x86.Build.0 = Debug|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|Any CPU.ActiveCfg = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|Any CPU.Build.0 = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|VisualGDB.ActiveCfg = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|VisualGDB.Build.0 = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|x64.ActiveCfg = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|x64.Build.0 = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|x86.ActiveCfg = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.MinSizeRel|x86.Build.0 = MinSizeRel|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|Any CPU.ActiveCfg = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|Any CPU.Build.0 = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|VisualGDB.ActiveCfg = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|VisualGDB.Build.0 = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|x64.ActiveCfg = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|x64.Build.0 = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|x86.ActiveCfg = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.Release|x86.Build.0 = Release|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|Any CPU.ActiveCfg = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|Any CPU.Build.0 = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|VisualGDB.ActiveCfg = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|VisualGDB.Build.0 = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|VisualGDB
+		{3036BA39-993F-434F-9699-83A3954EFD2C}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|VisualGDB
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

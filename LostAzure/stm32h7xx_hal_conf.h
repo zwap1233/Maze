@@ -169,8 +169,6 @@
 #define  USE_SD_TRANSCEIVER           0U       /*!< use uSD Transceiver */
 #define  USE_SPI_CRC                  1U       /*!< use CRC in SPI */
 #define  USE_FLASH_ECC                0U       /*!< use ECC error management in FLASH */
-	 
-#define  USE_FULL_LL_DRIVER                    /* Enable LL drivers, User added*/
 
 #define  USE_HAL_ADC_REGISTER_CALLBACKS     0U /* ADC register callback disabled     */
 #define  USE_HAL_CEC_REGISTER_CALLBACKS     0U /* CEC register callback disabled     */
