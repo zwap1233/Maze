@@ -99,6 +99,7 @@
                 <Files>
                   <string>Board.cpp</string>
                   <string>BoardManager.cpp</string>
+                  <string>Renderer.cpp</string>
                 </Files>
                 <RelatedFilterName>Source Files</RelatedFilterName>
               </VirtualSourceFolder>
@@ -108,6 +109,7 @@
                 <Files>
                   <string>BoardManager.h</string>
                   <string>Board.h</string>
+                  <string>Renderer.h</string>
                 </Files>
                 <RelatedFilterName>Header Files</RelatedFilterName>
               </VirtualSourceFolder>
@@ -186,14 +188,14 @@
     <AdditionalGDBSettings>
       <Features>
         <DisableAutoDetection>false</DisableAutoDetection>
-        <UseFrameParameter>false</UseFrameParameter>
-        <SimpleValuesFlagSupported>false</SimpleValuesFlagSupported>
-        <ListLocalsSupported>false</ListLocalsSupported>
-        <ByteLevelMemoryCommandsAvailable>false</ByteLevelMemoryCommandsAvailable>
-        <ThreadInfoSupported>false</ThreadInfoSupported>
-        <PendingBreakpointsSupported>false</PendingBreakpointsSupported>
-        <SupportTargetCommand>false</SupportTargetCommand>
-        <ReliableBreakpointNotifications>false</ReliableBreakpointNotifications>
+        <UseFrameParameter>true</UseFrameParameter>
+        <SimpleValuesFlagSupported>true</SimpleValuesFlagSupported>
+        <ListLocalsSupported>true</ListLocalsSupported>
+        <ByteLevelMemoryCommandsAvailable>true</ByteLevelMemoryCommandsAvailable>
+        <ThreadInfoSupported>true</ThreadInfoSupported>
+        <PendingBreakpointsSupported>true</PendingBreakpointsSupported>
+        <SupportTargetCommand>true</SupportTargetCommand>
+        <ReliableBreakpointNotifications>true</ReliableBreakpointNotifications>
       </Features>
       <EnableSmartStepping>false</EnableSmartStepping>
       <FilterSpuriousStoppedNotifications>false</FilterSpuriousStoppedNotifications>

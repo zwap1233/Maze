@@ -44,8 +44,11 @@ void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
 	
 	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
 	
+	LL_SPI_DisableDMAReq_TX(SPI1);
+	
 	LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_TX);
 	LL_SPI_SetTransferSize(SPI1, size);
+	LL_SPI_SetDataWidth(SPI1, LL_SPI_DATAWIDTH_8BIT);
 	
 	LL_SPI_Enable(SPI1);
 	LL_SPI_StartMasterTransfer(SPI1);
@@ -66,34 +69,51 @@ void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
 	LL_GPIO_SetOutputPin(board.SS_PORT, board.SS_PIN);
 }
 
-void receiveData(board_t &board, uint16_t addr, uint8_t *data, int size)
+void transmitDMA(board_t &board, uint16_t addr, uint8_t *data, int size)
 {
+//	data[0] = addr << 6 | (0b1 << 5);
 	data[0] = (uint8_t)(addr >> 2);
 	data[1] = (uint8_t)(addr & 0b11) << 6;
+	data[1] = data[1] | (0b1 << 5);
+	
+	SCB_CleanDCache_by_Addr((uint32_t*) data, 218);
+	
+	LL_DMA_ConfigAddresses(DMA1, LL_DMA_STREAM_0, (uint32_t) board.led_data, (uint32_t) LL_SPI_DMA_GetTxRegAddr(SPI1), LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+	LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_0, size);
+	
+	LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_TX);
+	LL_SPI_SetTransferSize(SPI1, size);
+	LL_SPI_SetDataWidth(SPI1, LL_SPI_DATAWIDTH_8BIT);
+	
+	LL_SPI_EnableDMAReq_TX(SPI1);
+	LL_SPI_EnableIT_EOT(SPI1);
+	
+	LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_0);
+	LL_SPI_Enable(SPI1);
 	
 	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
-	LL_SPI_TransmitData8(SPI1, data[0]);
-	LL_SPI_TransmitData8(SPI1, data[1]);
 	
-	for (int i = 2; i < size; i++)
-	{
-		data[i] = LL_SPI_ReceiveData8(SPI1);
-	}
-	LL_GPIO_SetOutputPin(board.SS_PORT, board.SS_PIN);
+	LL_SPI_StartMasterTransfer(SPI1);
+	
 }
 
-//void transmitDMA(board_t &board, uint16_t addr, uint8_t *data, int size)
-//{
-//	data[0] = (uint8_t)(addr >> 2);
-//	data[1] = (uint8_t)(addr & 0b11) << 6;
-//	data[1] = data[1] | (0b1 << 5);
-//	
-//	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
-//	HAL_SPI_Transmit_DMA(&hspi1, data, size);
-//}
+uint8_t completed = 0;
 
 void TransmissionCompletedCallback()
 {
+	
+	LL_GPIO_SetOutputPin(GPIOF, LL_GPIO_PIN_ALL);
+	
+	LL_SPI_Disable(SPI1);
+	LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_0);
+	
+	LL_DMA_ClearFlag_FE0(DMA1);
+	LL_DMA_ClearFlag_HT0(DMA1);
+	LL_DMA_ClearFlag_TC0(DMA1);
+	
+	LL_SPI_ClearFlag_TXTF(SPI1);
+	
+	completed = 1;
 }
 
 void initBoardManager()
@@ -193,7 +213,12 @@ void writeBoards()
 {
 	for (int i = 0; i < 9; i++)
 	{
-		transmitData(board[i], 0x200, board[i].led_data, 218);
+		transmitDMA(board[i], 0x200, board[i].led_data, 218);
+		while (!completed)
+		{
+			; //wait
+		}
+		completed = 0;
 	}
 	
 	pulseVSYNC();

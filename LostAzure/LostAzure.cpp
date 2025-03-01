@@ -141,7 +141,7 @@ int main(void)
 	
 	SystemClock_Config();
 	
-	//MX_DMA_Init();
+	MX_DMA_Init();
 	MX_SPI1_Init();
 	
 	/* Start scheduler */
@@ -228,16 +228,19 @@ static void MX_SPI1_Init(void)
 	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SPI1);
 	//enable DMA clk?
 	
-	//configure DMA Channel
-//	LL_DMA_SetPeriphRequest(DMA1, LL_DMA_STREAM_0, LL_DMAMUX1_REQ_SPI1_TX);
-//	LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_0, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
-//	LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_0, LL_DMA_PRIORITY_HIGH);
-//	LL_DMA_SetMode(DMA1, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
-//	LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_0, LL_DMA_PERIPH_NOINCREMENT);
-//	LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
-//	LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_0, LL_DMA_PDATAALIGN_BYTE);
-//	LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_BYTE);
-//	LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_0);
+	/* SPI1_TX Init */
+	LL_DMA_SetPeriphRequest(DMA1, LL_DMA_STREAM_0, LL_DMAMUX1_REQ_SPI1_TX);
+	LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_0, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+	LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_0, LL_DMA_PRIORITY_HIGH);
+	LL_DMA_SetMode(DMA1, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
+	LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_0, LL_DMA_PERIPH_NOINCREMENT);
+	LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
+	LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_BYTE);
+	LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_BYTE);
+	LL_DMA_EnableFifoMode(DMA1, LL_DMA_STREAM_0);
+	LL_DMA_SetFIFOThreshold(DMA1, LL_DMA_STREAM_0, LL_DMA_FIFOTHRESHOLD_1_4);
+	LL_DMA_SetMemoryBurstxfer(DMA1, LL_DMA_STREAM_0, LL_DMA_PBURST_SINGLE);
+	LL_DMA_SetPeriphBurstxfer(DMA1, LL_DMA_STREAM_0, LL_DMA_PBURST_SINGLE);
 	
 	SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
 	SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
@@ -245,7 +248,7 @@ static void MX_SPI1_Init(void)
 	SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
 	SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
 	SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-	SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV128;
+	SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV256;
 	SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
 	SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
 	SPI_InitStruct.CRCPoly = 0x0;
@@ -277,6 +280,7 @@ static void MX_SPI1_Init(void)
 static void MX_DMA_Init(void)
 {
 
+	/* Init with LL driver */
 	/* DMA controller clock enable */
 	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
