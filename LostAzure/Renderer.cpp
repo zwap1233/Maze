@@ -4,18 +4,22 @@
 #include "Section.h"
 #include "Room.h"
 
-#define led_offset(x,y) ((4-y)*6 + 36*x)
-void setLED(uint8_t *buffer, int x, int y, uint16_t red, uint16_t green, uint16_t blue)
+//#define led_offset(x,y) ((4-y)*6 + 36*x)
+#define led_offset(x,y) ((4-y)*3 + 18*x)
+void setLED(uint16_t *buffer, int x, int y, uint16_t red, uint16_t green, uint16_t blue)
 {
 	if (x > 4 || x < 0 || y > 4 || y < 0)
 		return; //out of bounds
 	
-	buffer[led_offset(x, y) + 2] = (uint8_t)(red & 0xff);
-	buffer[led_offset(x, y) + 3] = (uint8_t)(red >> 8);
-	buffer[led_offset(x, y) + 4] = (uint8_t)(green & 0xff);
-	buffer[led_offset(x, y) + 5] = (uint8_t)(green >> 8);
-	buffer[led_offset(x, y) + 6] = (uint8_t)(blue & 0xff);
-	buffer[led_offset(x, y) + 7] = (uint8_t)(blue >> 8);
+	buffer[led_offset(x, y) + 1] = red;
+	buffer[led_offset(x, y) + 2] = green;
+	buffer[led_offset(x, y) + 3] = blue;
+//	buffer[led_offset(x, y) + 3] = (uint8_t)(red & 0xff);
+//	buffer[led_offset(x, y) + 2] = (uint8_t)(red >> 8);
+//	buffer[led_offset(x, y) + 5] = (uint8_t)(green & 0xff);
+//	buffer[led_offset(x, y) + 4] = (uint8_t)(green >> 8);
+//	buffer[led_offset(x, y) + 7] = (uint8_t)(blue & 0xff);
+//	buffer[led_offset(x, y) + 6] = (uint8_t)(blue >> 8);
 }
 
 void renderRoom(int x, int y, uint8_t *buffer, Section& section)

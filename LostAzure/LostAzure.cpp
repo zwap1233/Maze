@@ -116,7 +116,7 @@ void TickTest()
 void SystemClock_Config(void);
 static void MX_SPI1_Init(void);
 static void MX_DMA_Init(void);
-
+void testMemTransfer();
 /**
   * @brief  Main program
   * @param  None
@@ -144,11 +144,18 @@ int main(void)
 	MX_DMA_Init();
 	MX_SPI1_Init();
 	
+	testMemTransfer();
+	
 	/* Start scheduler */
 	tx_kernel_enter();
 
 	/* We should never get here as control is now taken by the scheduler */
 	for (;;) ;
+}
+
+void testMemTransfer()
+{
+	
 }
 
 void SystemClock_Config(void)
@@ -235,12 +242,13 @@ static void MX_SPI1_Init(void)
 	LL_DMA_SetMode(DMA1, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
 	LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_STREAM_0, LL_DMA_PERIPH_NOINCREMENT);
 	LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
-	LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_BYTE);
-	LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_BYTE);
-	LL_DMA_EnableFifoMode(DMA1, LL_DMA_STREAM_0);
-	LL_DMA_SetFIFOThreshold(DMA1, LL_DMA_STREAM_0, LL_DMA_FIFOTHRESHOLD_1_4);
-	LL_DMA_SetMemoryBurstxfer(DMA1, LL_DMA_STREAM_0, LL_DMA_PBURST_SINGLE);
-	LL_DMA_SetPeriphBurstxfer(DMA1, LL_DMA_STREAM_0, LL_DMA_PBURST_SINGLE);
+	LL_DMA_SetPeriphSize(DMA1, LL_DMA_STREAM_0, LL_DMA_PDATAALIGN_HALFWORD);
+	LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_HALFWORD);
+	LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_0);
+//	LL_DMA_EnableFifoMode(DMA1, LL_DMA_STREAM_0);
+	LL_DMA_SetFIFOThreshold(DMA1, LL_DMA_STREAM_0, LL_DMA_FIFOTHRESHOLD_1_2);
+//	LL_DMA_SetMemoryBurstxfer(DMA1, LL_DMA_STREAM_0, LL_DMA_MBURST_INC4);
+//	LL_DMA_SetPeriphBurstxfer(DMA1, LL_DMA_STREAM_0, LL_DMA_PBURST_INC4);
 	
 	SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
 	SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
@@ -255,6 +263,7 @@ static void MX_SPI1_Init(void)
 	LL_SPI_Init(SPI1, &SPI_InitStruct);
 	LL_SPI_SetStandard(SPI1, LL_SPI_PROTOCOL_MOTOROLA);
 	LL_SPI_SetFIFOThreshold(SPI1, LL_SPI_FIFO_TH_01DATA);
+//	LL_SPI_EnableNSSPulseMgt(SPI1);
 
 	//Enable Interrupt
 	NVIC_SetPriority(SPI1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));

@@ -11,13 +11,13 @@
 #include <stm32h7xx_ll_utils.h>
 
 #include <math.h>
+#include <cstdint>
 
 void configBoard(board_t &board);
 
 #define VSYNC_Port GPIOA
 #define VSYNC_Pin LL_GPIO_PIN_3
-
-board_t board[9] = {
+__aligned(4) board_t board[9] = {
 	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_0 },
 	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_1 },
 	{ .SS_PORT = GPIOF, .SS_PIN = LL_GPIO_PIN_2 },
@@ -45,10 +45,12 @@ void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
 	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
 	
 	LL_SPI_DisableDMAReq_TX(SPI1);
+	LL_SPI_DisableIT_EOT(SPI1);
 	
 	LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_TX);
 	LL_SPI_SetTransferSize(SPI1, size);
 	LL_SPI_SetDataWidth(SPI1, LL_SPI_DATAWIDTH_8BIT);
+	LL_SPI_SetFIFOThreshold(SPI1, LL_SPI_FIFO_TH_01DATA);
 	
 	LL_SPI_Enable(SPI1);
 	LL_SPI_StartMasterTransfer(SPI1);
@@ -69,27 +71,66 @@ void transmitData(board_t &board, uint16_t addr, uint8_t *data, int size)
 	LL_GPIO_SetOutputPin(board.SS_PORT, board.SS_PIN);
 }
 
-void transmitDMA(board_t &board, uint16_t addr, uint8_t *data, int size)
+void transmitData16(board_t &board, uint16_t addr, uint16_t *data, int size)
 {
-//	data[0] = addr << 6 | (0b1 << 5);
-	data[0] = (uint8_t)(addr >> 2);
-	data[1] = (uint8_t)(addr & 0b11) << 6;
-	data[1] = data[1] | (0b1 << 5);
+	data[0] = addr << 6 | (0b1 << 5);
+	data[0] = __builtin_bswap16(data[0]);
+		
+	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
 	
-	SCB_CleanDCache_by_Addr((uint32_t*) data, 218);
+	LL_SPI_DisableDMAReq_TX(SPI1);
 	
-	LL_DMA_ConfigAddresses(DMA1, LL_DMA_STREAM_0, (uint32_t) board.led_data, (uint32_t) LL_SPI_DMA_GetTxRegAddr(SPI1), LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+	LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_TX);
+	LL_SPI_SetTransferSize(SPI1, size << 1); //size is in uint16_t while tsize needs to be in uint8_t
+	LL_SPI_SetDataWidth(SPI1, LL_SPI_DATAWIDTH_8BIT);
+	LL_SPI_SetFIFOThreshold(SPI1, LL_SPI_FIFO_TH_02DATA);
+	
+	LL_SPI_Enable(SPI1);
+	LL_SPI_StartMasterTransfer(SPI1);
+	
+	for (int i = 0; i < size; i++)
+	{
+		while (!LL_SPI_IsActiveFlag_TXP(SPI1));
+		LL_SPI_TransmitData16(SPI1, data[i]);
+	}
+	
+	while (!LL_SPI_IsActiveFlag_EOT(SPI1)); //wait till SPI is done
+	
+	LL_SPI_ClearFlag_EOT(SPI1);
+	LL_SPI_ClearFlag_TXTF(SPI1);
+	
+	LL_SPI_Disable(SPI1);
+	
+	LL_GPIO_SetOutputPin(board.SS_PORT, board.SS_PIN);
+}
+
+void transmitDMA(board_t &board, uint16_t addr, uint16_t *data, int size)
+{
+	data[0] = addr << 6 | (0b1 << 5);
+	data[0] = __builtin_bswap16(data[0]); // need to swap the bytes so the MSB byte goes first for address not needed later
+	
+	//Causes hard fault if D cache is disabled
+	SCB_CleanDCache_by_Addr((uint32_t*) data, size << 2); //need to flush Cache for DMA, only does so in 32 BYTE blocks and size in number of bytes
+	
+	LL_DMA_ConfigAddresses(DMA1,
+		LL_DMA_STREAM_0,
+		reinterpret_cast<uint32_t>(data),
+		LL_SPI_DMA_GetTxRegAddr(SPI1),
+		LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+	
 	LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_0, size);
 	
 	LL_SPI_SetTransferDirection(SPI1, LL_SPI_SIMPLEX_TX);
-	LL_SPI_SetTransferSize(SPI1, size);
+	LL_SPI_SetTransferSize(SPI1, size << 1);
 	LL_SPI_SetDataWidth(SPI1, LL_SPI_DATAWIDTH_8BIT);
+	LL_SPI_SetFIFOThreshold(SPI1, LL_SPI_FIFO_TH_02DATA);
 	
 	LL_SPI_EnableDMAReq_TX(SPI1);
 	LL_SPI_EnableIT_EOT(SPI1);
 	
-	LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_0);
 	LL_SPI_Enable(SPI1);
+	while (!LL_SPI_IsEnabled(SPI1)) ; //wait for SPI to enable
+	LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_0);
 	
 	LL_GPIO_ResetOutputPin(board.SS_PORT, board.SS_PIN);
 	
@@ -104,8 +145,12 @@ void TransmissionCompletedCallback()
 	
 	LL_GPIO_SetOutputPin(GPIOF, LL_GPIO_PIN_ALL);
 	
-	LL_SPI_Disable(SPI1);
 	LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_0);
+	while (LL_DMA_IsEnabledStream(DMA1, LL_DMA_STREAM_0)) ; //wait for DMA stream to disable
+	
+	LL_SPI_Disable(SPI1);
+	
+	LL_SPI_DisableIT_EOT(SPI1);
 	
 	LL_DMA_ClearFlag_FE0(DMA1);
 	LL_DMA_ClearFlag_HT0(DMA1);
@@ -147,8 +192,6 @@ void initBoardManager()
 	LL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 	
 	LL_GPIO_WriteOutputPort(GPIOF, 0xff);
-	
-	//LL_SPI_EnableIT_EOT(SPI1); //Enable EOT interrupt
 	
 	for (int i = 0; i < 9; i++)
 	{
@@ -213,7 +256,8 @@ void writeBoards()
 {
 	for (int i = 0; i < 9; i++)
 	{
-		transmitDMA(board[i], 0x200, board[i].led_data, 218);
+		transmitDMA(board[i], 0x200, (uint16_t *) board[i].led_data, 109);
+//		transmitData(board[i], 0x200, board[i].led_data, 218);
 		while (!completed)
 		{
 			; //wait

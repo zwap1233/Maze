@@ -4,11 +4,10 @@
 
 typedef struct
 {
+	uint16_t led_data[109];
 	GPIO_TypeDef *SS_PORT;
 	uint16_t SS_PIN;
-	
-	uint8_t led_data[218];
-} board_t;
+} __packed  board_t;
 
 void initBoardManager();
 
